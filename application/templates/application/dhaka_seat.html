@@ -1,0 +1,129 @@
+{%load static%}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seat Plan</title>
+  </head>
+  <body>
+    <button onclick="printDivContent()">Print</button>
+    <div id="student-information" style="width: 100%">
+      <div class="top">
+        <h2 style="position: relative">
+          <img
+            style="float: left"
+            src="{%static 'aiba.png' %}"
+            width="50"
+            height="50"
+          />ARMY INSTITUTE OF BUSINESS ADMINISTRATION
+        </h2>
+
+        <h4><i>Jalalabad Cantonment, Sylhet</i></h4>
+        <h5>
+          Admission Test for BBA Program<br />
+          Attendance Sheet<br />Venue: Bangladesh University of Professionals
+          (BUP)<br />Mirpur Cantonment, Dhaka-1216
+        </h5>
+      </div>
+      <div class="cent">
+        <h5>Room No:</h5>
+        <h5>Date: 2 July, 2022</h5>
+      </div>
+      <div style="page-break-before: always">
+        <table style="width: 95vw">
+          <tr>
+            <th>Sl. No.</th>
+            <th>Roll</th>
+            <th>Tracking</th>
+            <th>Name & Mothers Name</th>
+            <th>Photo</th>
+            <th>Signature</th>
+          </tr>
+          <tbody>
+            {% for a in page_obj %}
+            <tr>
+              <td style="width: 8%">
+                {{ forloop.counter0|add:page_obj.start_index }}
+              </td>
+              <td style="width: 12%">{{ a.serial }}</td>
+              <td>{{a.application.id}}</td>
+              <td style="width: 25%">
+                {{ a.application.name }}<br />
+                {{a.name_mother}}
+              </td>
+              <td style="width: 15%">
+                <img src="{{a.photo_personal.url}}" width="70" height="70" />
+              </td>
+              <td></td>
+            </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+      <style>
+        .cent {
+          display: inline-flex;
+          flex-direction: row;
+          width: 95%;
+          justify-content: space-between;
+        }
+        body,
+        #student-information {
+          page-break-inside: avoid;
+          display: flex;
+          flex-direction: column;
+          font: 16px/1.5 "Open Sans", sans-serif;
+          align-items: center;
+        }
+        table,
+        th,
+        td {
+          border: 1px solid black;
+          border-collapse: collapse;
+          text-align: center;
+        }
+        .top {
+          text-align: center;
+        }
+        @media print {
+          table {
+            page-break-before: always;
+          }
+        }
+      </style>
+    </div>
+    <div class="pagination">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+  </body>
+  <script type="text/javascript">
+    function printDivContent() {
+      var divElementContents = document.getElementById(
+        "student-information"
+      ).innerHTML;
+      var windows = window.open("", "");
+      windows.document.write("<html>");
+      windows.document.write("<body >");
+      windows.document.write(divElementContents);
+      windows.document.write("</body></html>");
+      windows.document.close();
+      windows.print();
+    }
+  </script>
+</html>

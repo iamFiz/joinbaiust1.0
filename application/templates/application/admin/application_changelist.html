@@ -1,0 +1,195 @@
+<!-- prettier-ignore -->
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+ {{ block.super }}
+
+<li>
+  <a
+    href="download-all-csv/?{{ request.GET.urlencode }}"
+    style="background-color: rgba(67, 69, 145, 0.705)"
+    >Export All as CSV</a
+  >
+</li>
+{% if perms.application.change_application %}
+
+<li>
+  <a href="approve/" style="background-color: rgba(25, 139, 14, 0.705)"
+    >Confirm GPA>3.50</a
+  >
+</li>
+<li>
+  <a href="approve-payments/" style="background-color: rgba(69, 69, 8, 0.705)"
+    >Approve Verified Payments</a
+  >
+</li>
+
+{% endif %} {% endblock %} {% block extrahead %}{{ block.super }}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.min.js"></script>
+<script>
+      var randomColorGenerator = function () {
+          return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
+      };
+      var options = {
+          responsive:true,
+          maintainAspectRatio: true,
+          legend: {
+              position: 'left'
+          },
+
+          animation: {
+              animateScale: true,
+              animateRotate: true
+          }
+      };
+      window.onload = function () {
+
+      var per_day_ctx = document.getElementById("per-day-chart");
+          {% regroup cl.queryset|dictsort:"created_at" by created_at|date:"Y-m-d"  as objects_per_day %}
+
+          var lineChart = new Chart( per_day_ctx , {
+              type: 'bar',
+              data: {
+                  labels: [{% for object in objects_per_day|slice:"-7:" %}'{{ object.grouper }}',{% endfor %}],
+                  datasets: [{
+                      data: [{% for object in objects_per_day|slice:"-7:" %}'{{ object.list|length }}',{% endfor %}],
+                      backgroundColor: [{% for object in objects_per_day|slice:":7" %}randomColorGenerator(),{% endfor %}]
+                  }]
+              },
+              options: {...options,legend:{
+                display:false
+              },title: {display: true,text: 'Applications Per Day'},scales: {
+      yAxes: [{
+          ticks: {
+              beginAtZero: true
+          }
+      }]
+  }}
+          });
+
+
+
+          var ctx = document.getElementById("gender-chart");
+         {% regroup cl.queryset|dictsort:"gender" by get_gender_display as gender_list %}
+          var lineChart = new Chart(ctx, {
+              type: 'doughnut',
+
+              data: {
+                  labels: [{% for gender in gender_list %}'{{ gender.grouper }}',{% endfor %}],
+                  datasets: [{
+                      data: [{% for gender in gender_list %}'{{ gender.list|length }}',{% endfor %}],
+                      backgroundColor: [{% for gender in gender_list %}randomColorGenerator(),{% endfor %}]
+                  }]
+              },
+              options:  {...options,title: {display: true,text: 'Group by Gender'}}
+          });
+
+
+          var district_ctx = document.getElementById("district-chart");
+          {% regroup cl.queryset|dictsort:"district" by district as district_list %}
+          var lineChart = new Chart(district_ctx, {
+              type: 'doughnut',
+              data: {
+                 labels: [{% for district in district_list %}'{{ district.grouper }}',{% endfor %}],
+                  datasets: [{
+                      data: [{% for district in district_list %}'{{ district.list|length }}',{% endfor %}],
+                      backgroundColor: [{% for district in district_list %}randomColorGenerator(),{% endfor %}]
+                  }]
+              },
+              options:  {...options,legend:{display:false},title: {display: true,text: 'Group by District'}}
+          });
+        var stx = document.getElementById("source-chart");
+         {% regroup cl.queryset|dictsort:"information_source" by information_source as information_source_list %}
+          var lineChart = new Chart(stx, {
+
+              type: 'doughnut',
+
+              data: {
+                  labels: [{% for source in information_source_list %}'{{ source.grouper }}',{% endfor %}],
+                  datasets: [{
+                      data: [{% for source in information_source_list %}'{{ source.list|length }}',{% endfor %}],
+                      backgroundColor: [{% for source in information_source_list %}randomColorGenerator(),{% endfor %}]
+                  }]
+              },
+              options:  {...options,legend:{display:false},title: {display: true,text: 'Group by Information Source'}}
+          });
+
+        }
+</script>
+{% endblock %} {% block content %}
+<h1>Total Application: {{cl.queryset.count}}</h1>
+<h1>Graphs</h1>
+<div class="container" style="margin-bottom: 100px">
+  <div class="col-sm-4">
+    <canvas id="per-day-chart"></canvas>
+  </div>
+  <div class="col-sm-4">
+    <canvas id="gender-chart"></canvas>
+  </div>
+
+  <div class="col-sm-4">
+    <canvas id="district-chart"></canvas>
+  </div>
+  <div class="col-sm-4">
+    <canvas id="source-chart"></canvas>
+  </div>
+</div>
+<style>
+  .container {
+    display: flex;
+    flex-direction: row;
+  }
+  .container div {
+    width: 33%;
+  }
+  @media (max-width: 1200px) {
+    .container {
+      flex-direction: column;
+    }
+    .container div {
+      width: 100%;
+    }
+  }
+</style>
+
+{{ block.super }} {% endblock %} {% comment %} {% block extrahead %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const data = []
+  {% for application in per_day_count %}
+    data.push({date:new Date("{{application.date|date}}").toLocaleString('en-us'), count:"{{application.count}}"})
+  {% endfor %}
+
+
+  var config = {
+    label:"Application Per Day",
+    type: 'bar',
+    data: {
+      datasets: [{
+        data: data,
+        label: "Application"
+      }],
+    },
+    options: {
+          responsive: true,
+
+      parsing: {
+      xAxisKey: "date",
+      yAxisKey: "count"
+  },
+  }}
+  ;
+
+  window.onload = function() {
+    var ctx = document.getElementById('chart').getContext('2d');
+    window.myPie = new Chart(ctx, config);
+  };
+</script>
+
+{% endblock %} {% endcomment %} {% comment %} {% block content %} {{ block.super
+}}
+<canvas id="chart" style="margin-bottom: 70px; max-height: 400px"></canvas> {%
+endblock %} {% endcomment %}

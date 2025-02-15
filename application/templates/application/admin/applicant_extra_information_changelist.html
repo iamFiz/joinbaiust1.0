@@ -1,0 +1,139 @@
+<!-- prettier-ignore -->
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+ {{ block.super }}
+<li>
+  <a
+    href="download-dhaka-csv/"
+    style="background-color: rgba(67, 69, 145, 0.705)"
+    >Export Dhaka CSV</a
+  >
+</li>
+<li>
+  <a
+    href="download-all-csv/?{{ request.GET.urlencode }}"
+    style="background-color: rgba(67, 69, 145, 0.705)"
+    >Export All as CSV</a
+  >
+</li>
+{% if perms.application.change_application %}
+
+<li>
+  <a
+    href="remind-download-admit/"
+    style="background-color: rgba(39, 224, 147, 0.705)"
+    >Send Admit Card Download Reminder</a
+  >
+</li>
+<li>
+  <a
+    href="remind-upload-photo/"
+    style="background-color: rgba(75, 196, 212, 0.705)"
+    >Send Photo Upload Reminder</a
+  >
+</li>
+<li>
+  <a
+    title="Notify Venue: Sylhet, those who have paid"
+    href="send-venue-location-sylhet/"
+    style="background-color: rgba(69, 69, 8, 0.705)"
+    >Notify Venue: Sylhet</a
+  >
+</li>
+
+<li>
+  <a
+    title="Notify Venue: Dhaka, those who have paid"
+    href="send-venue-location-dhaka/"
+    style="background-color: rgba(68, 133, 218, 0.705)"
+    >Notify Venue: Dhaka</a
+  >
+</li>
+<li>
+  <a
+    href="send-dummy-venue-location/"
+    title="Notify Dummy Venue: Dummy, those who haven't paid"
+    style="background-color: rgba(209, 33, 33, 0.705)"
+    >Notify Venue: Mirpur</a
+  >
+</li>
+{% endif %} {% endblock %} {% block extrahead %}{{ block.super }}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.min.js"></script>
+<script>
+      var randomColorGenerator = function () {
+          return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
+      };
+      var options = {
+          responsive:true,
+          maintainAspectRatio: true,
+          legend: {
+              position: 'left'
+          },
+
+          animation: {
+              animateScale: true,
+              animateRotate: true
+          }
+      };
+      window.onload = function () {
+
+      var per_day_ctx = document.getElementById("per-day-chart");
+          {% regroup cl.queryset|dictsort:"created_at" by created_at|date:"Y-m-d"  as objects_per_day %}
+
+          var lineChart = new Chart( per_day_ctx , {
+              type: 'bar',
+              data: {
+                  labels: [{% for object in objects_per_day|slice:"-7:" %}'{{ object.grouper }}',{% endfor %}],
+                  datasets: [{
+                      data: [{% for object in objects_per_day|slice:"-7:" %}'{{ object.list|length }}',{% endfor %}],
+                      backgroundColor: [{% for object in objects_per_day|slice:":7" %}randomColorGenerator(),{% endfor %}]
+                  }]
+              },
+              options: {...options,legend:{
+                display:false
+              },title: {display: true,text: 'Applications Per Day'},scales: {
+      yAxes: [{
+          ticks: {
+              beginAtZero: true
+          }
+      }]
+  }}
+          });
+
+
+
+
+
+
+        }
+</script>
+{% endblock %} {% block content %}
+<h1>Total Submission: {{cl.queryset.count}}</h1>
+<h1>Graphs</h1>
+<div class="container" style="margin-bottom: 100px">
+  <div class="col-sm-4">
+    <canvas id="per-day-chart"></canvas>
+  </div>
+</div>
+<style>
+  .container {
+    display: flex;
+    flex-direciton: row;
+  }
+  .container div {
+    width: 33%;
+  }
+  @media (max-width: 1200px) {
+    .container {
+      flex-direction: column;
+    }
+    .container div {
+      width: 100%;
+    }
+  }
+</style>
+
+{{ block.super }} {% endblock %}

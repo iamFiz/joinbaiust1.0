@@ -1,0 +1,115 @@
+<!-- prettier-ignore -->
+{% extends "admin/change_list.html" %}
+
+
+ {% block extrahead %}{{ block.super }}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.min.js"></script>
+<script>
+      var randomColorGenerator = function () {
+          return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
+      };
+      var options = {
+          responsive:true,
+          maintainAspectRatio: true,
+          legend: {
+              position: 'left'
+          },
+
+          animation: {
+              animateScale: true,
+              animateRotate: true
+          }
+      };
+      window.onload = function () {
+
+
+
+
+          var ctx = document.getElementById("gender-chart");
+         {% regroup cl.queryset by information_source as gender_list %}
+          var lineChart = new Chart(ctx, {
+              type: 'doughnut',
+
+              data: {
+                  labels: [{% for gender in gender_list %}'{{ gender.grouper }}',{% endfor %}],
+                  datasets: [{
+                      data: [{% for gender in gender_list %}'{{ gender.list|length }}',{% endfor %}],
+                      backgroundColor: [{% for gender in gender_list %}randomColorGenerator(),{% endfor %}]
+                  }]
+              },
+              options:  {...options,title: {display: true,text: 'Group by Source'}}
+          });
+
+
+
+        }
+</script>
+{% endblock %} {% block content %}<h1> Total Response: {{cl.queryset.count}}</h1>
+<h1>Graphs</h1>
+<div class="container" style="margin-bottom: 100px">
+
+  <div class="col-sm-4">
+    <canvas id="gender-chart"></canvas>
+  </div>
+
+</div>
+<style>
+  .container {
+    display: flex;
+    flex-direciton: row;
+  }
+  .container div {
+    width: 33%;
+  }
+  @media (max-width: 1200px) {
+    .container {
+      flex-direction: column;
+    }
+    .container div {
+      width: 100%;
+    }
+  }
+</style>
+
+{{ block.super }} {% endblock %}
+ {% comment %} {% block extrahead %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const data = []
+  {% for application in per_day_count %}
+    data.push({date:new Date("{{application.date|date}}").toLocaleString('en-us'), count:"{{application.count}}"})
+  {% endfor %}
+
+
+  var config = {
+    label:"Application Per Day",
+    type: 'bar',
+    data: {
+      datasets: [{
+        data: data,
+        label: "Application"
+      }],
+    },
+    options: {
+          responsive: true,
+
+      parsing: {
+      xAxisKey: "date",
+      yAxisKey: "count"
+  },
+  }}
+  ;
+
+  window.onload = function() {
+    var ctx = document.getElementById('chart').getContext('2d');
+    window.myPie = new Chart(ctx, config);
+  };
+</script>
+
+{% endblock %} {% endcomment %} {% comment %} {% block content %} {{ block.super
+}}
+<canvas id="chart" style="margin-bottom: 70px; max-height: 400px"></canvas> {%
+endblock %} {% endcomment %}
